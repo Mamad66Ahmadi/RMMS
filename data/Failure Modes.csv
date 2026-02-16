@@ -1,0 +1,21 @@
+Compressor,Air Cooler,Pump,Motor,Sensor,Mixer,Heat Exchanger,Valve,PSV
+bearing failure,bearing failure,bearing failure,bearing failure,broken cable,bearing failure,corrosion / erosion,actuator failure,bellows rupture
+bolt failure,belt failure,bolt failure,current unbalance,calibration,belt failure,cross-contamination,body rupture,blocked
+casing crack,blade damage,casing crack,fan damage,connector looseness,coupling failure,plugging,control signal fault,body rupture
+check valve failure,coupling failure,cavitation,foundation,noise signal,foundation looseness,gasket leakage,corrosion / erosion,contamination
+coupling failure,foundation looseness,check valve failure,greasing,power supply failure,gearbox failure,overheating,flange failure,corrosion / erosion
+filter failure,gearbox failure,coupling failure,misalignment,probe failure,impeller damage,shell crack,gasket failure,fails to open
+foundation,pulley failure,filter failure,motor burn-out,sensor left unplugged,pulley failure,thermal shock,jammed,improper calibration
+gear failure,shaft failure,foundation,motor jammed,sensor unplugging,shaft failure,tube leakage,leakage – external,leakage – external
+impeller  damage,vibration switch,gear failure,rotor bars failure,transmitter failure,,tube rupture,leakage –internal,leakage –internal
+insufficient lubrication,,impeller  damage,rotor unbalance,wrong indication,,vibration damage,not closing,opens below set
+misalignment,,insufficient lubrication,sensor failure,,,,not opening,spring failure
+oil contamination,,misalignment,shaft breakage,,,,packing leakage,stem failure
+oil oxidation,,oil contamination,soft foot,,,,positioner failure,stuck closed
+onloader valve failure,,oil oxidation,stator failure,,,,seat  damage,stuck open
+rotor rub,,rotor rub,wrong rotation direction,,,,stem failure,
+rotor unbalance,,rotor unbalance,,,,,thermal expansion jam,
+seal failure,,seal failure,,,,,,
+sensor failure,,sensor failure,,,,,,
+shaft breakage,,shaft breakage,,,,,,
+soft foot,,soft foot,,,,,,
