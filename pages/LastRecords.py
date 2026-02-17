@@ -174,7 +174,8 @@ def main():
             records.append({"Date": "", "Tag": tag, "Type": "", "Department": "", "Description": "", "WO No": ""})
 
     df = pd.DataFrame(records)
-    df["WO No"] = df["WO No"].apply(style_wo_html)
+    df["WO No"] = df["WO No"].fillna("").astype(str).apply(style_wo_html)
+
 
     df["Type"] = df["Type"].apply(style_job_type_html)
 
@@ -193,6 +194,8 @@ def main():
 
 
     df.drop(columns=["_Date_dt"], inplace=True)
+    df = df[["Date", "Tag", "Type", "WO No", "Department", "Description"]]
+
 
     # =====================================================
     # 🖨️ Print Mode Toggle
@@ -266,8 +269,8 @@ def main():
             th:nth-child(1), td:nth-child(1) { width:7%; }   /* Date */
             th:nth-child(2), td:nth-child(2) { width:8%; }   /* Tag */
             th:nth-child(3), td:nth-child(3) { width:5%; }   /* Type */
-            th:nth-child(4), td:nth-child(4) { width:5%; }   /* ppm */
-            th:nth-child(5), td:nth-child(5) { width:8%; }   /* Department */
+            th:nth-child(4), td:nth-child(4) { width:6%; }   /* ppm */
+            th:nth-child(5), td:nth-child(5) { width:7%; }   /* Department */
             th:nth-child(6), td:nth-child(6) {
                 width:65%;
                 text-align:left !important;
@@ -325,9 +328,9 @@ def main():
         th:nth-child(1), td:nth-child(1) {{ width:8%; }}
         th:nth-child(2), td:nth-child(2) {{ width:8%; }}
         th:nth-child(3), td:nth-child(3) {{ width:5%; }}
-        th:nth-child(4), td:nth-child(4) {{ width:5%; }}   /* ppm */
+        th:nth-child(4), td:nth-child(4) {{ width:6%; }}   /* ppm */
 
-        th:nth-child(5), td:nth-child(5) {{ width:8%; }}
+        th:nth-child(5), td:nth-child(5) {{ width:7%; }}
         th:nth-child(6), td:nth-child(6) {{
             width:65%;
             text-align:left !important;
