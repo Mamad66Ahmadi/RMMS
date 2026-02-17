@@ -93,27 +93,42 @@ def trend_chart_object_page():
     # ------------------------------------------------------------
     # TOP 7 UNITS BASED ON PM AND CM SEPARATELY
     # ------------------------------------------------------------
-    top_units_pm = df_pm["unit"].value_counts().head(7).index.tolist()
-    top_units_cm = df_cm["unit"].value_counts().head(7).index.tolist()
+    top_units_pm = df_pm["unit"].value_counts().head(10).index.tolist()
+    top_units_cm = df_cm["unit"].value_counts().head(10).index.tolist()
 
     # st.info({"Top Units PM": top_units_pm})
     # st.info({"Top Units CM": top_units_cm})
 
-    # Filter each dataset based on its own top units
-    df_pm_top_units = df_pm[df_pm["unit"].isin(top_units_pm)]
-    df_cm_top_units = df_cm[df_cm["unit"].isin(top_units_cm)]
+    # ------------------------------------------------------------
+    # GROUP UNITS: Top 12 + Others
+    # ------------------------------------------------------------
 
-    # Group after filtering
+    # PM
+    df_pm_units = df_pm.copy()
+    df_pm_units["unit_grouped"] = df_pm_units["unit"].where(
+        df_pm_units["unit"].isin(top_units_pm),
+        "Others"
+    )
+
     pm_unit = (
-        df_pm_top_units.groupby(["month", "unit"])
+        df_pm_units.groupby(["month", "unit_grouped"])
         .size()
         .reset_index(name="Count")
+        .rename(columns={"unit_grouped": "unit"})
+    )
+
+    # CM
+    df_cm_units = df_cm.copy()
+    df_cm_units["unit_grouped"] = df_cm_units["unit"].where(
+        df_cm_units["unit"].isin(top_units_cm),
+        "Others"
     )
 
     cm_unit = (
-        df_cm_top_units.groupby(["month", "unit"])
+        df_cm_units.groupby(["month", "unit_grouped"])
         .size()
         .reset_index(name="Count")
+        .rename(columns={"unit_grouped": "unit"})
     )
 
     # ============================================================
@@ -144,20 +159,105 @@ def trend_chart_object_page():
     # DISPLAY CHARTS — PM & CM by TOP UNITS
     # ============================================================
 
+    # Configurable Top-N
+    top_n = st.slider("Select number of Top Units", 3, 15, 10)
+
+    # Recompute top units dynamically
+    top_units_pm = df_pm["unit"].value_counts().head(top_n).index.tolist()
+    top_units_cm = df_cm["unit"].value_counts().head(top_n).index.tolist()
+
+    # -------------------------
+    # PM: Group Top-N + Others
+    # -------------------------
+    df_pm_units = df_pm.copy()
+    df_pm_units["unit_grouped"] = df_pm_units["unit"].where(
+        df_pm_units["unit"].isin(top_units_pm),
+        "Others"
+    )
+
+    pm_unit = (
+        df_pm_units.groupby(["month", "unit_grouped"])
+        .size()
+        .reset_index(name="Count")
+        .rename(columns={"unit_grouped": "unit"})
+    )
+
+    # -------------------------
+    # CM: Group Top-N + Others
+    # -------------------------
+    df_cm_units = df_cm.copy()
+    df_cm_units["unit_grouped"] = df_cm_units["unit"].where(
+        df_cm_units["unit"].isin(top_units_cm),
+        "Others"
+    )
+
+    cm_unit = (
+        df_cm_units.groupby(["month", "unit_grouped"])
+        .size()
+        .reset_index(name="Count")
+        .rename(columns={"unit_grouped": "unit"})
+    )
+
+    # Ordering: Others always last
+    unit_order_pm = top_units_pm + ["Others"]
+    unit_order_cm = top_units_cm + ["Others"]
+
     colU1, colU2 = st.columns(2)
 
+    # -------------------------
+    # PM Chart
+    # -------------------------
     with colU1:
-        st.markdown("**📊 PM Trend — Stacked by Top Units (PM-based)**")
-        fig_pm_unit = px.bar(pm_unit, x="month", y="Count",
-                             color="unit", barmode="stack")
-        fig_pm_unit.update_xaxes(categoryorder="array", categoryarray=month_label_list)
+        st.markdown(f"**📊 PM Trend — Top {top_n} Units + Others**")
+
+        fig_pm_unit = px.bar(
+            pm_unit,
+            x="month",
+            y="Count",
+            color="unit",
+            barmode="stack",
+            category_orders={"unit": unit_order_pm}
+        )
+
+        fig_pm_unit.update_xaxes(
+            categoryorder="array",
+            categoryarray=month_label_list
+        )
+
+        # Style "Others"
+        fig_pm_unit.update_traces(
+            selector=dict(name="Others"),
+            marker_color="lightgray"
+        )
+
         st.plotly_chart(fig_pm_unit, use_container_width=True)
 
+    # -------------------------
+    # CM Chart
+    # -------------------------
     with colU2:
-        st.markdown("**📊 CM Trend — Stacked by Top Units (CM-based)**")
-        fig_cm_unit = px.bar(cm_unit, x="month", y="Count",
-                             color="unit", barmode="stack")
-        fig_cm_unit.update_xaxes(categoryorder="array", categoryarray=month_label_list)
+        st.markdown(f"**📊 CM Trend — Top {top_n} Units + Others**")
+
+        fig_cm_unit = px.bar(
+            cm_unit,
+            x="month",
+            y="Count",
+            color="unit",
+            barmode="stack",
+            category_orders={"unit": unit_order_cm}
+        )
+
+        fig_cm_unit.update_xaxes(
+            categoryorder="array",
+            categoryarray=month_label_list
+        )
+
+        # Style "Others"
+        fig_cm_unit.update_traces(
+            selector=dict(name="Others"),
+            marker_color="lightgray"
+        )
+
         st.plotly_chart(fig_cm_unit, use_container_width=True)
 
 
@@ -176,49 +276,87 @@ def unit_department_charts(days_back=365):
     df = df[df["unit"] != "999"]  # remove placeholder
     df["Object_Type"] = df["Object_Type"].fillna("Unknown").astype(str)
 
-
     if df.empty:
         st.warning("⚠️ No CM records in this time range.")
         return
 
-    # top 10 units
-    top10_units = df["unit"].value_counts().head(10).index.tolist()
-    df_top10 = df[df["unit"].isin(top10_units)]
-
-    # left chart: units → departments
+    # -------------------------
+    # LEFT chart (ALL units)
+    # -------------------------
     unit_dep_grouped = (
-        df_top10.groupby(["unit", "department"])
+        df.groupby(["unit", "department"])
         .size()
         .reset_index(name="Count")
     )
 
-    # right chart: departments → units
+
+    # -------------------------
+    # RIGHT chart: Top 14 Units + Others
+    # -------------------------
+    top14_units = df["unit"].value_counts().head(9).index.tolist()
+
+    df_right = df.copy()
+    df_right["unit_grouped"] = df_right["unit"].where(
+        df_right["unit"].isin(top14_units),
+        "Others"
+    )
+
     dep_unit_grouped = (
-        df_top10.groupby(["department", "unit"])
+        df_right
+        .groupby(["department", "unit_grouped"])
         .size()
         .reset_index(name="Count")
+        .rename(columns={"unit_grouped": "unit"})
     )
 
-    unit_order = df_top10.groupby("unit").size().sort_values(ascending=False).index.tolist()
-    dept_order = df_top10.groupby("department").size().sort_values(ascending=False).index.tolist()
+    # Ordering
+    dept_order = (
+        dep_unit_grouped.groupby("department")["Count"]
+        .sum()
+        .sort_values(ascending=False)
+        .index.tolist()
+    )
+
+    unit_order = top14_units + ["Others"]
 
 
     colA, colB = st.columns(2)
 
-    # Left chart
+    # Left chart: ALL units
     with colA:
-        st.markdown("**Units per Department (CM Only)**")
-        fig_unit_dep = px.bar(unit_dep_grouped, x="unit", y="Count",
-                              color="department", barmode="stack")
+        st.markdown("**Units per Department (CM Only – All Units)**")
+        fig_unit_dep = px.bar(
+            unit_dep_grouped,
+            x="unit",
+            y="Count",
+            color="department",
+            barmode="stack"
+        )
         fig_unit_dep.update_xaxes(categoryorder="array", categoryarray=unit_order)
         st.plotly_chart(fig_unit_dep, use_container_width=True)
 
-    # Right chart
+    # Right chart: TOP 14 units
     with colB:
-        st.markdown("**Departments per Unit (CM Only)**")
-        fig_dep_unit = px.bar(dep_unit_grouped, x="department", y="Count",
-                              color="unit", barmode="stack")
-        fig_dep_unit.update_xaxes(categoryorder="array", categoryarray=dept_order)
+        st.markdown("**Departments per Unit (CM Only – Top 14 Units + Others)**")
+
+        fig_dep_unit = px.bar(
+            dep_unit_grouped,
+            x="department",
+            y="Count",
+            color="unit",
+            barmode="stack",
+            category_orders={
+                "unit": unit_order,
+                "department": dept_order
+            }
+        )
+
+        # Style "Others"
+        fig_dep_unit.update_traces(
+            selector=dict(name="Others"),
+            marker_color="lightgray"
+        )
+
         st.plotly_chart(fig_dep_unit, use_container_width=True)
 
 
